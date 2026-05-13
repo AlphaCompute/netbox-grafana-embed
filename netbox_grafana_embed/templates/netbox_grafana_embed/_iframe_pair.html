@@ -1,0 +1,36 @@
+{% comment %}
+Render one Grafana panel iframe.
+
+Inputs:
+  - grafana_url       (str, no trailing slash)
+  - dashboard_uid     (str)
+  - dashboard_slug    (str)
+  - panel_id          (int)
+  - device_variable   (str)
+  - device_value      (str)
+  - component_variable (str, optional — pass empty for device-level)
+  - component_value    (str, optional)
+  - from_range, to_range, refresh
+  - theme_sync (bool) — render dual light+dark for instant switch
+  - height_px (int)
+{% endcomment %}
+
+{% with base=grafana_url|add:"/d-solo/"|add:dashboard_uid|add:"/"|add:dashboard_slug %}
+{% with qs="?panelId="|add:panel_id|stringformat:"s"|add:"&var-"|add:device_variable|add:"="|add:device_value|add:"&from="|add:from_range|add:"&to="|add:to_range|add:"&refresh="|add:refresh %}
+<div class="ngfe-pair" style="height: {{ height_px }}px;">
+  {% if theme_sync %}
+    <iframe data-theme="light"
+            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value }}{% endif %}&theme=light"
+            frameborder="0" loading="lazy"
+            title="Grafana panel {{ panel_id }} (light)"></iframe>
+    <iframe data-theme="dark"
+            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value }}{% endif %}&theme=dark"
+            frameborder="0" loading="lazy"
+            title="Grafana panel {{ panel_id }} (dark)"></iframe>
+  {% else %}
+    <iframe src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value }}{% endif %}&theme=light"
+            frameborder="0" loading="lazy"
+            title="Grafana panel {{ panel_id }}"></iframe>
+  {% endif %}
+</div>
+{% endwith %}{% endwith %}

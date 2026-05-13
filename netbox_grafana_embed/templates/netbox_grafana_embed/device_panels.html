@@ -1,0 +1,53 @@
+{% comment %}
+Render device-level Grafana embeds. Operator may configure 1..N blocks
+in PLUGINS_CONFIG['netbox_grafana_embed']['device_embeds']; each becomes
+one card on the device detail page.
+{% endcomment %}
+
+<style>
+  .ngfe-card .ngfe-pair { position: relative; width: 100%; }
+  .ngfe-card .ngfe-pair > iframe {
+    width: 100%; height: 100%; border: 1px solid var(--tblr-border-color, #dee2e6);
+    border-radius: .25rem; position: absolute; top: 0; left: 0;
+  }
+  /* dual-iframe theme sync — show light by default, dark when NetBox is dark */
+  .ngfe-card .ngfe-pair > iframe[data-theme="dark"]  { visibility: hidden; }
+  .ngfe-card .ngfe-pair > iframe[data-theme="light"] { visibility: visible; }
+  html[data-bs-theme="dark"] .ngfe-card .ngfe-pair > iframe[data-theme="light"] { visibility: hidden; }
+  html[data-bs-theme="dark"] .ngfe-card .ngfe-pair > iframe[data-theme="dark"]  { visibility: visible; }
+</style>
+
+{% for block in blocks %}
+<div class="card mt-3 ngfe-card">
+  <h5 class="card-header d-flex align-items-center">
+    <i class="mdi mdi-chart-line me-2"></i>
+    <span>{{ block.title }}</span>
+    <a class="btn btn-sm btn-primary ms-auto"
+       href="{{ block.grafana_url }}/d/{{ block.dashboard_uid }}/{{ block.dashboard_slug }}?var-{{ block.device_variable }}={{ block.device_value|urlencode }}&from={{ block.from_range }}&to={{ block.to_range }}"
+       target="_blank" rel="noopener">
+       <i class="mdi mdi-open-in-new"></i> Full dashboard
+    </a>
+  </h5>
+  <div class="card-body">
+    {% if block.stat_panels %}
+    <div class="row g-2 mb-3">
+      {% for pid in block.stat_panels %}
+      <div class="col-md-{{ 12|divisibleby:block.stat_panels|yesno:'4,4' }}" style="flex: 1 1 0; min-width: 0;">
+        {% include "netbox_grafana_embed/_iframe_pair.html" with grafana_url=block.grafana_url dashboard_uid=block.dashboard_uid dashboard_slug=block.dashboard_slug panel_id=pid device_variable=block.device_variable device_value=block.device_value component_variable="" component_value="" from_range=block.from_range to_range=block.to_range refresh=block.refresh theme_sync=block.theme_sync height_px=block.stat_panel_height_px %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% for pid in block.timeseries_panels %}
+    <div class="mb-2">
+      {% include "netbox_grafana_embed/_iframe_pair.html" with grafana_url=block.grafana_url dashboard_uid=block.dashboard_uid dashboard_slug=block.dashboard_slug panel_id=pid device_variable=block.device_variable device_value=block.device_value component_variable="" component_value="" from_range=block.from_range to_range=block.to_range refresh=block.refresh theme_sync=block.theme_sync height_px=block.timeseries_panel_height_px %}
+    </div>
+    {% endfor %}
+
+    {% if block.footer %}
+    <small class="text-muted d-block mt-2">{{ block.footer }}</small>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}

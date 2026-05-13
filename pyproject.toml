@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netbox-grafana-embed"
+version = "1.0.0"
+description = "Embed Grafana panels on NetBox Device and InventoryItem detail pages."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "AlphaCompute", email = "opensource@alphacompute.io" }]
+keywords = ["netbox", "netbox-plugin", "grafana", "embed", "iframe", "observability"]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Framework :: Django",
+  "Intended Audience :: System Administrators",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: System :: Monitoring",
+  "Topic :: System :: Networking :: Monitoring",
+]
+
+[project.urls]
+Homepage    = "https://github.com/AlphaCompute/netbox-grafana-embed"
+Repository  = "https://github.com/AlphaCompute/netbox-grafana-embed"
+Issues      = "https://github.com/AlphaCompute/netbox-grafana-embed/issues"
+Changelog   = "https://github.com/AlphaCompute/netbox-grafana-embed/blob/main/CHANGELOG.md"
+
+[project.optional-dependencies]
+dev = [
+  "ruff>=0.5.0",
+  "pytest>=8.0",
+]
+
+[tool.setuptools]
+packages = ["netbox_grafana_embed"]
+include-package-data = true
+
+[tool.setuptools.package-data]
+"netbox_grafana_embed" = ["templates/netbox_grafana_embed/*.html"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
+ignore = ["E501"]
