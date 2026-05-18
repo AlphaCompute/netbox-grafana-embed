@@ -4,6 +4,20 @@ All notable changes are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.3] - 2026-05-18
+
+### Fixed
+
+- `__version__` in `netbox_grafana_embed/__init__.py` was still pinned
+  to `'1.0.0'` while `pyproject.toml` was bumped to `1.0.2`. NetBox
+  reports both `/api/status/`'s `plugins[…]` and `installed_apps[…]`
+  from the plugin module's `__version__` attribute (via
+  `getattr(app_module, '__version__')` for installed_apps and
+  `PluginConfig.version` for plugins, both of which our class wires to
+  `__version__`). Pyproject's `version` is only used for pip METADATA
+  and is not surfaced by NetBox. Bumped `__version__` to `'1.0.3'` so
+  the two stay in sync.
+
 ## [1.0.2] - 2026-05-18
 
 ### Fixed

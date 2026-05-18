@@ -6,7 +6,7 @@ See README.md for the full schema and examples.
 """
 from netbox.plugins import PluginConfig
 
-__version__ = '1.0.0'
+__version__ = '1.0.3'
 
 
 class GrafanaEmbedConfig(PluginConfig):
