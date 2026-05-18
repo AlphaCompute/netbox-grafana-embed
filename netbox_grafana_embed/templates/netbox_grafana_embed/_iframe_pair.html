@@ -15,22 +15,23 @@ Inputs:
   - height_px (int)
 {% endcomment %}
 
+{% with pid_str=panel_id|stringformat:"s" device_value_enc=device_value|urlencode %}
 {% with base=grafana_url|add:"/d-solo/"|add:dashboard_uid|add:"/"|add:dashboard_slug %}
-{% with qs="?panelId="|add:panel_id|stringformat:"s"|add:"&var-"|add:device_variable|add:"="|add:device_value|add:"&from="|add:from_range|add:"&to="|add:to_range|add:"&refresh="|add:refresh %}
+{% with qs="?panelId="|add:pid_str|add:"&var-"|add:device_variable|add:"="|add:device_value_enc|add:"&from="|add:from_range|add:"&to="|add:to_range|add:"&refresh="|add:refresh %}
 <div class="ngfe-pair" style="height: {{ height_px }}px;">
   {% if theme_sync %}
     <iframe data-theme="light"
-            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value }}{% endif %}&theme=light"
+            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}&theme=light"
             frameborder="0" loading="lazy"
             title="Grafana panel {{ panel_id }} (light)"></iframe>
     <iframe data-theme="dark"
-            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value }}{% endif %}&theme=dark"
+            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}&theme=dark"
             frameborder="0" loading="lazy"
             title="Grafana panel {{ panel_id }} (dark)"></iframe>
   {% else %}
-    <iframe src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value }}{% endif %}&theme=light"
+    <iframe src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}&theme=light"
             frameborder="0" loading="lazy"
             title="Grafana panel {{ panel_id }}"></iframe>
   {% endif %}
 </div>
-{% endwith %}{% endwith %}
+{% endwith %}{% endwith %}{% endwith %}

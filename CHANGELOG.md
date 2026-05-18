@@ -4,6 +4,29 @@ All notable changes are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-05-18
+
+### Fixed
+
+- Malformed iframe URLs: every embedded Grafana iframe was loading a
+  URL missing both `?` and `panelId=N`, e.g.
+  `/d-solo/<uid>/<slug>&var-device=...`. Grafana responded with a 404
+  whose default `X-Frame-Options: deny` made the browser show the
+  iframe as `<host> refused to connect`.
+  Root cause: in `_iframe_pair.html`, `"?panelId="|add:panel_id|stringformat:"s"`
+  evaluated as `stringformat(add("?panelId=", 3), "s")`. Django's `add`
+  filter, asked to concatenate a string with an int, falls through both
+  the `int()+int()` and `str+str` branches and returns the empty string,
+  which deletes the whole `?panelId=N` prefix from the query string.
+  Coerce `panel_id` to a string *before* feeding it into `add` by
+  hoisting it into a `{% with pid_str=panel_id|stringformat:"s" %}`
+  block.
+
+- URL-encode `device_value` and `component_value` in the iframe `src`.
+  Previously only the "Full dashboard" external link encoded them, so
+  Device names or component values containing characters like space
+  or `&` produced broken iframe URLs.
+
 ## [1.0.1] - 2026-05-18
 
 ### Fixed
