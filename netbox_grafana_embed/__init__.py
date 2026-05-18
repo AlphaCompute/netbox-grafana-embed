@@ -4,9 +4,14 @@ InventoryItem detail pages.
 Configuration lives entirely in ``PLUGINS_CONFIG['netbox_grafana_embed']``.
 See README.md for the full schema and examples.
 """
+from importlib.metadata import PackageNotFoundError, version as _pkg_version
+
 from netbox.plugins import PluginConfig
 
-__version__ = '1.0.3'
+try:
+    __version__ = _pkg_version('netbox-grafana-embed')
+except PackageNotFoundError:
+    __version__ = '0.0.0+unknown'
 
 
 class GrafanaEmbedConfig(PluginConfig):

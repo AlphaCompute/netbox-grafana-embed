@@ -4,6 +4,20 @@ All notable changes are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.4] - 2026-05-18
+
+### Changed
+
+- `__version__` in `netbox_grafana_embed/__init__.py` is now resolved
+  at import time from the installed package's metadata via
+  `importlib.metadata.version('netbox-grafana-embed')`, with a
+  `'0.0.0+unknown'` fallback if the package isn't installed (e.g. when
+  running directly from a source checkout). `pyproject.toml`'s
+  `version` field becomes the single source of truth — future
+  releases only need to bump it in one place and both `/api/status/`'s
+  `installed_apps[…]` and `plugins[…]` will reflect the new version
+  automatically.
+
 ## [1.0.3] - 2026-05-18
 
 ### Fixed
