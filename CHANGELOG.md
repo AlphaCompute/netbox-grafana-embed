@@ -4,6 +4,18 @@ All notable changes are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] - 2026-05-18
+
+### Fixed
+
+- Render error on `dcim.device` pages when `stat_panels` is configured.
+  The device template tried to compute the Bootstrap column width via
+  `{{ 12|divisibleby:block.stat_panels|yesno:'4,4' }}`, which raised
+  `TypeError: int() argument must be a string, a bytes-like object or
+  a real number, not 'list'`. Column width is now computed in Python
+  (mirroring the existing InventoryItem behaviour) and the template
+  reads it as `block.stat_col_md`.
+
 ## [1.0.0] - 2026-05-13
 
 First public release.

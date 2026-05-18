@@ -104,13 +104,16 @@ class DeviceGrafanaPanels(PluginTemplateExtension):
             if value is None:
                 continue
             shared = _shared_context(cfg, embed)
+            stat_panels = embed.get('stat_panels') or []
+            stat_col_md = max(3, 12 // max(1, len(stat_panels)))
             blocks.append({
                 'title':           embed.get('title', 'Live metrics'),
                 'dashboard_uid':   embed['dashboard_uid'],
                 'dashboard_slug':  embed.get('dashboard_slug', embed['dashboard_uid']),
                 'device_variable': embed.get('device_variable', 'device'),
                 'device_value':    value,
-                'stat_panels':     embed.get('stat_panels') or [],
+                'stat_panels':     stat_panels,
+                'stat_col_md':     stat_col_md,
                 'timeseries_panels': embed.get('timeseries_panels') or [],
                 'footer':          embed.get('footer', ''),
                 **shared,
