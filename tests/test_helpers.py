@@ -190,3 +190,46 @@ def test_shared_context_kiosk_prefix_per_embed_override():
     embed = {"kiosk_mode": None}
     ctx = tc._shared_context(cfg, embed)
     assert ctx["kiosk_prefix"] == ""
+
+
+def test_dash_chrome_fragment_all_off():
+    assert tc._dash_chrome_fragment(
+        hide_variables=False, hide_time_picker=False, hide_links=False
+    ) == ""
+
+
+def test_dash_chrome_fragment_only_variables():
+    assert tc._dash_chrome_fragment(
+        hide_variables=True, hide_time_picker=False, hide_links=False
+    ) == "&_dash.hideVariables=true"
+
+
+def test_dash_chrome_fragment_only_time_picker():
+    assert tc._dash_chrome_fragment(
+        hide_variables=False, hide_time_picker=True, hide_links=False
+    ) == "&_dash.hideTimePicker=true"
+
+
+def test_dash_chrome_fragment_only_links():
+    assert tc._dash_chrome_fragment(
+        hide_variables=False, hide_time_picker=False, hide_links=True
+    ) == "&_dash.hideLinks=true"
+
+
+def test_dash_chrome_fragment_all_on_order_stable():
+    # Order is variables, time picker, links — stable so URLs are diffable.
+    assert tc._dash_chrome_fragment(
+        hide_variables=True, hide_time_picker=True, hide_links=True
+    ) == "&_dash.hideVariables=true&_dash.hideTimePicker=true&_dash.hideLinks=true"
+
+
+def test_shared_context_dash_chrome_default_empty():
+    ctx = tc._shared_context({}, {})
+    assert ctx["dash_chrome_fragment"] == ""
+
+
+def test_shared_context_dash_chrome_per_embed_override():
+    cfg = {"hide_variables": False, "hide_links": False}
+    embed = {"hide_variables": True, "hide_links": True}
+    ctx = tc._shared_context(cfg, embed)
+    assert ctx["dash_chrome_fragment"] == "&_dash.hideVariables=true&_dash.hideLinks=true"

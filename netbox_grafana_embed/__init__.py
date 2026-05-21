@@ -62,6 +62,18 @@ class GrafanaEmbedConfig(PluginConfig):
         #   other str    → forwarded verbatim, for future Grafana values.
         'kiosk_mode': '',
 
+        # Granular dashboard-subnav toggles for whole-dashboard mode.
+        # Grafana 11+ Scenes-based dashboards expose `_dash.hideX=true`
+        # URL params; each flag here is a thin boolean wrapper around
+        # one of those. All three default False (subnav stays visible).
+        # Useful when the embed already has equivalent context from
+        # NetBox (e.g. the parent device page name already tells the
+        # user which server they're looking at, so `hide_variables`
+        # removes the redundant Grafana variable dropdowns).
+        'hide_variables':   False,
+        'hide_time_picker': False,
+        'hide_links':       False,
+
         # --- Theme sync ------------------------------------------------------
         # When True, the plugin renders BOTH light and dark theme iframes
         # and toggles their CSS visibility based on NetBox's data-bs-theme

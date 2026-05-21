@@ -181,6 +181,9 @@ role matches will render the embed.
 | `whole_dashboard` | `False` | When `True`, embed the whole dashboard as one iframe (`?kiosk`) instead of per-panel `d-solo` iframes |
 | `whole_dashboard_height_px` | `800` | iframe height in whole-dashboard mode |
 | `kiosk_mode` | `''` | Whole-dashboard mode: value for Grafana's `?kiosk=` URL param. `''` → bare `?kiosk` (hides top nav + hamburger). `'tv'` → legacy alias. `None`/`False` → omit, show full Grafana chrome. |
+| `hide_variables` | `False` | Whole-dashboard mode: when `True`, append `&_dash.hideVariables=true` to hide the dashboard's variable dropdowns. |
+| `hide_time_picker` | `False` | Whole-dashboard mode: when `True`, append `&_dash.hideTimePicker=true` to hide the time picker + auto-refresh dropdown. |
+| `hide_links` | `False` | Whole-dashboard mode: when `True`, append `&_dash.hideLinks=true` to hide custom dashboard links. |
 
 Any of these can be overridden per-embed by setting the same key inside
 a `device_embeds` entry or an `inventory_item_embeds` value.

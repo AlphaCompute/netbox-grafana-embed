@@ -4,6 +4,28 @@ All notable changes are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.8] - 2026-05-21
+
+### Added
+
+- Three new per-embed booleans (also valid as global defaults) that
+  selectively hide pieces of the dashboard subnav inside a
+  whole-dashboard embed by appending Grafana 11+ Scenes
+  `_dash.hideX=true` URL params:
+
+  | Setting             | Hides                                                  |
+  | ------------------- | ------------------------------------------------------ |
+  | `hide_variables`    | The variable dropdowns (typical `var-*` template selectors). |
+  | `hide_time_picker`  | The time-range picker and the auto-refresh dropdown.   |
+  | `hide_links`        | Custom dashboard links / external buttons.             |
+
+  All three default `False` (subnav stays visible — no behaviour
+  change for existing setups). Most useful when the embed already
+  has equivalent context from NetBox — for example, on a device
+  page the parent breadcrumb already says which server the user is
+  looking at, so `hide_variables: True` removes the redundant
+  Grafana `Server: <name>` dropdown.
+
 ## [1.0.7] - 2026-05-21
 
 ### Fixed
