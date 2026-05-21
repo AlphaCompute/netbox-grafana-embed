@@ -28,7 +28,7 @@ device and the component-level variable).
   </h5>
   <div class="card-body">
     {% if block.whole_dashboard %}
-      {% include "netbox_grafana_embed/_whole_dashboard_iframe.html" with grafana_url=block.grafana_url dashboard_uid=block.dashboard_uid dashboard_slug=block.dashboard_slug device_variable=block.device_variable device_value=block.device_value component_variable=block.component_variable component_value=block.component_value from_range=block.from_range to_range=block.to_range refresh=block.refresh theme_sync=block.theme_sync height_px=block.whole_dashboard_height_px %}
+      {% include "netbox_grafana_embed/_whole_dashboard_iframe.html" with grafana_url=block.grafana_url dashboard_uid=block.dashboard_uid dashboard_slug=block.dashboard_slug device_variable=block.device_variable device_value=block.device_value component_variable=block.component_variable component_value=block.component_value from_range=block.from_range to_range=block.to_range refresh=block.refresh kiosk_prefix=block.kiosk_prefix theme_sync=block.theme_sync height_px=block.whole_dashboard_height_px %}
     {% else %}
       {% if block.stat_panels %}
       <div class="row g-2 mb-3">
