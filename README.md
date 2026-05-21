@@ -179,7 +179,12 @@ role matches will render the embed.
 | `stat_panel_height_px` | `120` | iframe height for stat panels |
 | `timeseries_panel_height_px` | `260` | iframe height for timeseries panels |
 | `whole_dashboard` | `False` | When `True`, embed the whole dashboard as one iframe (`?kiosk`) instead of per-panel `d-solo` iframes |
-| `whole_dashboard_height_px` | `800` | iframe height in whole-dashboard mode |
+| `whole_dashboard_height_px` | `800` | iframe height in whole-dashboard mode. Accepts an int or the literal `'auto'` — see [Auto-height mode](#auto-height-mode). |
+| `grafana_internal_url` | `''` (falls back to `grafana_url`) | Server-side URL used for the auto-height Grafana API call. In docker-compose set to the service name (e.g. `http://grafana:3000`). |
+| `grafana_api_token` | `''` | Bearer token for the auto-height Grafana API call. Omit when Grafana allows anonymous viewer access. |
+| `whole_dashboard_cell_height_px` | `32` | Auto-height: pixels per Grafana grid row. |
+| `whole_dashboard_padding_px` | `120` | Auto-height: pixels added on top of the grid total (subnav, padding, footer). |
+| `whole_dashboard_fetch_timeout_s` | `2.0` | Auto-height: HTTP timeout for the dashboard JSON fetch. |
 | `kiosk_mode` | `''` | Whole-dashboard mode: value for Grafana's `?kiosk=` URL param. `''` → bare `?kiosk` (hides top nav + hamburger). `'tv'` → legacy alias. `None`/`False` → omit, show full Grafana chrome. |
 | `hide_variables` | `False` | Whole-dashboard mode: when `True`, append `&_dash.hideVariables=true` to hide the dashboard's variable dropdowns. |
 | `hide_time_picker` | `False` | Whole-dashboard mode: when `True`, append `&_dash.hideTimePicker=true` to hide the time picker + auto-refresh dropdown. |
@@ -238,6 +243,47 @@ the `kiosk_mode` setting (see the global-defaults table above):
 # backward compatibility.
 'kiosk_mode': 'tv',
 ```
+
+## Auto-height mode
+
+Browsers can't auto-grow a cross-origin iframe to fit its content — the
+same-origin policy blocks the parent document from reading
+`iframe.contentDocument.scrollHeight`. So the iframe height has to be
+set explicitly in the parent.
+
+For whole-dashboard mode the plugin can do this for you:
+
+```python
+'device_embeds': [
+    {
+        'title':                     'Live metrics',
+        'dashboard_uid':             'my-server',
+        'dashboard_slug':            'my-server-detail',
+        'device_variable':           'device',
+        'whole_dashboard':           True,
+        'whole_dashboard_height_px': 'auto',  # ← here
+    },
+],
+
+# Required when Grafana lives at a different URL from inside the
+# NetBox container than from the user's browser. In docker-compose
+# this is usually the service name.
+'grafana_internal_url': 'http://grafana:3000',
+
+# Optional — when Grafana doesn't allow anonymous viewer access.
+'grafana_api_token': 'glsa_xxxxxxxxxxxxxxxxxx',
+```
+
+The plugin then issues `GET {grafana_internal_url}/api/dashboards/uid/{uid}`
+once per dashboard, walks every panel's `gridPos`, computes
+`max(panel.y + panel.h) * whole_dashboard_cell_height_px +
+whole_dashboard_padding_px`, and uses that as the iframe height. The
+result is cached for the lifetime of the worker process — restart
+NetBox after redesigning a dashboard if you want the cache to refresh
+sooner.
+
+On any HTTP / parse error the embed falls back to 800 px and logs a
+warning under the `netbox_grafana_embed` logger.
 
 ## How the iframes are constructed
 

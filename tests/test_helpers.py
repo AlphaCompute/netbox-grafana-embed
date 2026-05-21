@@ -233,3 +233,128 @@ def test_shared_context_dash_chrome_per_embed_override():
     embed = {"hide_variables": True, "hide_links": True}
     ctx = tc._shared_context(cfg, embed)
     assert ctx["dash_chrome_fragment"] == "&_dash.hideVariables=true&_dash.hideLinks=true"
+
+
+# ---------------------------------------------------------------------------
+# whole_dashboard_height_px auto-resolution
+# ---------------------------------------------------------------------------
+
+def test_resolve_height_int_passthrough():
+    assert tc._resolve_whole_dashboard_height(
+        1500, cfg={}, dashboard_uid="x") == 1500
+
+
+def test_resolve_height_numeric_string():
+    assert tc._resolve_whole_dashboard_height(
+        "1500", cfg={}, dashboard_uid="x") == 1500
+
+
+def test_resolve_height_unknown_str_falls_back_to_800():
+    # Any unrecognised string other than 'auto' returns the safe default
+    # rather than crashing the page render.
+    assert tc._resolve_whole_dashboard_height(
+        "huge", cfg={}, dashboard_uid="x") == 800
+
+
+def test_resolve_height_auto_success(monkeypatch):
+    # Mock requests.get to return a synthetic dashboard with three panels
+    # whose grid extents are 0..8, 8..16, 16..24. max_bottom = 24, so
+    # 24 * 32 + 120 = 888.
+    import requests
+
+    class _Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"dashboard": {"panels": [
+                {"gridPos": {"y": 0,  "h": 8}},
+                {"gridPos": {"y": 8,  "h": 8}},
+                {"gridPos": {"y": 16, "h": 8}},
+            ]}}
+
+    def _fake_get(url, headers=None, timeout=None):
+        return _Resp()
+
+    monkeypatch.setattr(requests, "get", _fake_get)
+    tc._cached_dashboard_height.cache_clear()
+
+    cfg = {
+        "grafana_internal_url": "http://grafana:3000",
+        "grafana_api_token": "",
+        "whole_dashboard_cell_height_px": 32,
+        "whole_dashboard_padding_px": 120,
+        "whole_dashboard_fetch_timeout_s": 2.0,
+    }
+    assert tc._resolve_whole_dashboard_height(
+        "auto", cfg=cfg, dashboard_uid="srv") == 24 * 32 + 120
+
+
+def test_resolve_height_auto_fetch_error_falls_back(monkeypatch):
+    import requests
+
+    def _boom(url, headers=None, timeout=None):
+        raise requests.exceptions.ConnectionError("nope")
+
+    monkeypatch.setattr(requests, "get", _boom)
+    tc._cached_dashboard_height.cache_clear()
+
+    assert tc._resolve_whole_dashboard_height(
+        "auto",
+        cfg={"grafana_internal_url": "http://grafana:3000"},
+        dashboard_uid="srv",
+    ) == 800
+
+
+def test_resolve_height_auto_empty_dashboard_falls_back(monkeypatch):
+    import requests
+
+    class _Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"dashboard": {"panels": []}}
+
+    monkeypatch.setattr(requests, "get",
+                        lambda url, headers=None, timeout=None: _Resp())
+    tc._cached_dashboard_height.cache_clear()
+
+    assert tc._resolve_whole_dashboard_height(
+        "auto",
+        cfg={"grafana_internal_url": "http://grafana:3000"},
+        dashboard_uid="srv",
+    ) == 800
+
+
+def test_resolve_height_auto_falls_back_to_browser_url_if_internal_missing(monkeypatch):
+    # When grafana_internal_url is empty, fall back to grafana_url so
+    # cloud setups (where Grafana is on the public internet) work
+    # without extra config.
+    seen_urls = []
+    import requests
+
+    class _Resp:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"dashboard": {"panels": [
+                {"gridPos": {"y": 0, "h": 4}},
+            ]}}
+
+    def _fake_get(url, headers=None, timeout=None):
+        seen_urls.append(url)
+        return _Resp()
+
+    monkeypatch.setattr(requests, "get", _fake_get)
+    tc._cached_dashboard_height.cache_clear()
+
+    cfg = {
+        "grafana_url": "https://grafana.example.com",
+        "grafana_internal_url": "",
+        "whole_dashboard_cell_height_px": 32,
+        "whole_dashboard_padding_px": 120,
+    }
+    tc._resolve_whole_dashboard_height("auto", cfg=cfg, dashboard_uid="srv")
+    assert seen_urls == ["https://grafana.example.com/api/dashboards/uid/srv"]

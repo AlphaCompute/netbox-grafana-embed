@@ -3,8 +3,13 @@
 All behaviour is driven by ``PLUGINS_CONFIG['netbox_grafana_embed']`` —
 see ``__init__.py`` for the full schema.
 """
+import logging
+from functools import lru_cache
+
 from django.conf import settings
 from netbox.plugins import PluginTemplateExtension
+
+log = logging.getLogger(__name__)
 
 
 def _cfg():
@@ -75,8 +80,10 @@ def _shared_context(cfg, embed):
                                                 cfg.get('timeseries_panel_height_px', 260)),
         'whole_dashboard':            bool(embed.get('whole_dashboard',
                                                      cfg.get('whole_dashboard', False))),
-        'whole_dashboard_height_px':  embed.get('whole_dashboard_height_px',
-                                                cfg.get('whole_dashboard_height_px', 800)),
+        'whole_dashboard_height_px':  _resolve_whole_dashboard_height(
+            embed.get('whole_dashboard_height_px',
+                      cfg.get('whole_dashboard_height_px', 800)),
+            cfg=cfg, dashboard_uid=embed.get('dashboard_uid', '')),
         # Pre-built leading querystring fragment for whole-dashboard mode.
         # See _kiosk_prefix() for the mapping from operator config.
         'kiosk_prefix':               _kiosk_prefix(
@@ -117,6 +124,70 @@ def _kiosk_prefix(value):
     if value == '':
         return 'kiosk&'
     return f'kiosk={value}&'
+
+
+def _resolve_whole_dashboard_height(value, *, cfg, dashboard_uid):
+    """Resolve `whole_dashboard_height_px` to an int.
+
+    Pass-through for ints / numeric strings; for the literal ``'auto'``
+    the helper fetches the dashboard JSON from Grafana, sums up the
+    grid extent, multiplies by ``whole_dashboard_cell_height_px``, and
+    adds ``whole_dashboard_padding_px``. Falls back to ``800`` (the
+    safe default also used elsewhere) on any HTTP / parse error.
+    """
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str) and value.isdigit():
+        return int(value)
+    if value != 'auto':
+        # Unknown sentinel — return a sane default rather than crashing
+        # the page render.
+        return 800
+
+    base = cfg.get('grafana_internal_url') or cfg.get('grafana_url', '')
+    base = base.rstrip('/')
+    token = cfg.get('grafana_api_token', '')
+    cell_px = int(cfg.get('whole_dashboard_cell_height_px', 32))
+    padding_px = int(cfg.get('whole_dashboard_padding_px', 120))
+    timeout_s = float(cfg.get('whole_dashboard_fetch_timeout_s', 2.0))
+    return _cached_dashboard_height(
+        base, dashboard_uid, token, cell_px, padding_px, timeout_s,
+    )
+
+
+@lru_cache(maxsize=128)
+def _cached_dashboard_height(base_url, dashboard_uid, token,
+                             cell_px, padding_px, timeout_s):
+    """Per-worker cache around the Grafana API call. Cleared on
+    NetBox restart, which is the expected workflow when an operator
+    redesigns a dashboard."""
+    try:
+        # Imported lazily so the test shim doesn't have to provide it.
+        import requests
+        url = f'{base_url}/api/dashboards/uid/{dashboard_uid}'
+        headers = {'Accept': 'application/json'}
+        if token:
+            headers['Authorization'] = f'Bearer {token}'
+        resp = requests.get(url, headers=headers, timeout=timeout_s)
+        resp.raise_for_status()
+        panels = (resp.json().get('dashboard') or {}).get('panels') or []
+        max_bottom = 0
+        for p in panels:
+            gp = p.get('gridPos') or {}
+            bottom = int(gp.get('y', 0)) + int(gp.get('h', 0))
+            if bottom > max_bottom:
+                max_bottom = bottom
+        if max_bottom == 0:
+            log.warning(
+                'netbox_grafana_embed: dashboard %s has no panels with '
+                'gridPos; falling back to 800px', dashboard_uid)
+            return 800
+        return max_bottom * cell_px + padding_px
+    except Exception as exc:
+        log.warning(
+            'netbox_grafana_embed: auto-height fetch failed for %s '
+            '(%s); falling back to 800px', dashboard_uid, exc)
+        return 800
 
 
 def _dash_chrome_fragment(*, hide_variables, hide_time_picker, hide_links):
