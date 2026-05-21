@@ -4,6 +4,43 @@ All notable changes are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.9] - 2026-05-21
+
+### Added
+
+- `whole_dashboard_height_px` now accepts the literal string `'auto'`
+  in addition to ints. In auto mode the plugin fetches the dashboard
+  JSON server-side via Grafana's
+  `GET /api/dashboards/uid/<uid>`, walks every panel's `gridPos`,
+  computes `max(panel.y + panel.h) * whole_dashboard_cell_height_px
+  + whole_dashboard_padding_px`, and uses that as the iframe height.
+  The result is cached per-uid via `functools.lru_cache` for the
+  lifetime of the worker process.
+
+- Four new global settings supporting auto mode:
+
+  | Setting | Default | Purpose |
+  | --- | --- | --- |
+  | `grafana_internal_url` | `''` (falls back to `grafana_url`) | URL the NetBox process uses to reach Grafana's API. In docker-compose this is usually the service name (`http://grafana:3000`), not the browser-facing localhost URL. |
+  | `grafana_api_token` | `''` | Optional Bearer token, omitted when empty. Empty works when Grafana has anonymous viewer access. |
+  | `whole_dashboard_cell_height_px` | `32` | Grafana renders one grid row at 30 px + small spacing; 32 covers both. |
+  | `whole_dashboard_padding_px` | `120` | Fixed pixels added to the grid total. Covers the subnav, outer padding, and the "Powered by Grafana" footer. |
+  | `whole_dashboard_fetch_timeout_s` | `2.0` | HTTP timeout for the dashboard JSON fetch. |
+
+  On any HTTP / parse error the embed falls back to a safe 800 px
+  default and logs a warning under `netbox_grafana_embed`.
+
+### Notes
+
+- Auto mode requires the `requests` package to be importable inside
+  the NetBox process. NetBox already depends on it, so this is a
+  no-op in any normal install.
+- Browsers cannot auto-grow cross-origin iframes to their content
+  (same-origin policy on `iframe.contentDocument.scrollHeight`), so
+  the iframe height must be set in the parent document. Auto mode
+  computes the right value server-side instead of asking operators
+  to eyeball it.
+
 ## [1.0.8] - 2026-05-21
 
 ### Added

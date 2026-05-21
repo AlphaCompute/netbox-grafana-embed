@@ -44,11 +44,57 @@ class GrafanaEmbedConfig(PluginConfig):
         'stat_panel_height_px': 120,
         'timeseries_panel_height_px': 260,
         # Default iframe height when an embed sets `whole_dashboard: True`
-        # and renders the full dashboard as a single iframe. Short enough
-        # to not dominate the device page; the iframe scrolls internally
-        # for taller dashboards. Override per-embed for a fit-without-
-        # scroll experience.
+        # and renders the full dashboard as a single iframe. Accepts:
+        #   - int (e.g. 1500)   — explicit pixel height. Browsers can't
+        #                         auto-grow cross-origin iframes, so this
+        #                         is the simplest mode: pick a number that
+        #                         covers your dashboard with margin.
+        #   - 'auto'            — fetch the dashboard JSON from Grafana
+        #                         once, compute `max(panel.y+panel.h) *
+        #                         whole_dashboard_cell_height_px +
+        #                         whole_dashboard_padding_px`, and use that.
+        #                         Result is cached per-uid for the lifetime
+        #                         of the worker process. Requires
+        #                         `grafana_internal_url` to be reachable
+        #                         from the NetBox container (Grafana API
+        #                         is hit server-side, not through the
+        #                         browser) and optionally
+        #                         `grafana_api_token` for non-anonymous
+        #                         Grafana setups. On any failure (HTTP
+        #                         error, missing dashboard, no auth) the
+        #                         embed falls back to the integer default
+        #                         below.
         'whole_dashboard_height_px': 800,
+
+        # --- Server-side Grafana API access (used only by 'auto' mode) -------
+        # Browser-facing `grafana_url` above is what ends up in the
+        # iframe `src` — must be reachable from the user's browser. The
+        # `grafana_internal_url` below is what the NetBox process uses
+        # to fetch dashboard JSON for height computation; defaults to
+        # `grafana_url` (sensible for setups where Grafana is on the
+        # public internet) but in docker-compose it usually needs to be
+        # the in-network service name, e.g. 'http://grafana:3000'.
+        'grafana_internal_url': '',
+        # Bearer token for the Grafana API call. Empty disables the
+        # Authorization header — fine when Grafana has anonymous viewer
+        # access enabled for the relevant org/folder.
+        'grafana_api_token': '',
+        # Grafana renders each grid row at 30 px + 8 px inter-row
+        # margin. 36 is a compromise: ~30 px panel + ~6 px of
+        # per-row spacing/padding amortised across the grid. Tuned
+        # empirically against the alphabox dashboards (server: 46
+        # grid units, gpu: 48 grid units) so the iframe fits the
+        # full dashboard with a small footer gap and no internal
+        # Grafana scrollbar.
+        'whole_dashboard_cell_height_px': 36,
+        # Fixed pixels added on top of the computed grid total.
+        # Covers the dashboard subnav (variable / time-picker bar,
+        # ~50 px), outer Grafana padding (~30 px), the "Powered by
+        # Grafana" footer (~30 px), and a small safety margin.
+        'whole_dashboard_padding_px': 205,
+        # HTTP timeout (seconds) for the dashboard JSON fetch. Page
+        # render falls back to the integer default if exceeded.
+        'whole_dashboard_fetch_timeout_s': 2.0,
 
         # --- Whole-dashboard mode chrome control -----------------------------
         # Value passed to Grafana's ?kiosk= URL param when whole_dashboard
