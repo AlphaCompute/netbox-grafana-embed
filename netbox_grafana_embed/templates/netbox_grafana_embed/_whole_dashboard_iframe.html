@@ -17,6 +17,11 @@ Inputs:
         Always either empty or ending in "&" so the rest of the
         querystring can be concatenated as-is.
   - from_range, to_range, refresh
+  - dash_chrome_fragment (str) — pre-built sequence of
+        `&_dash.hideX=true` tokens that toggle individual pieces of
+        the dashboard subnav (variables / time picker / links).
+        Empty when nothing is hidden. Always leads with "&" so it
+        appends to the existing querystring cleanly.
   - theme_sync (bool) — render dual light+dark for instant switch
   - height_px (int)
 
@@ -31,15 +36,15 @@ giving up per-panel height control and the stat-tile bootstrap row.
 <div class="ngfe-pair" style="height: {{ height_px }}px;">
   {% if theme_sync %}
     <iframe data-theme="light"
-            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}&theme=light"
+            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}{{ dash_chrome_fragment }}&theme=light"
             frameborder="0" loading="lazy"
             title="Grafana dashboard {{ dashboard_uid }} (light)"></iframe>
     <iframe data-theme="dark"
-            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}&theme=dark"
+            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}{{ dash_chrome_fragment }}&theme=dark"
             frameborder="0" loading="lazy"
             title="Grafana dashboard {{ dashboard_uid }} (dark)"></iframe>
   {% else %}
-    <iframe src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}&theme=light"
+    <iframe src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}{{ dash_chrome_fragment }}&theme=light"
             frameborder="0" loading="lazy"
             title="Grafana dashboard {{ dashboard_uid }}"></iframe>
   {% endif %}

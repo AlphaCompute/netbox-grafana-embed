@@ -81,6 +81,16 @@ def _shared_context(cfg, embed):
         # See _kiosk_prefix() for the mapping from operator config.
         'kiosk_prefix':               _kiosk_prefix(
             embed.get('kiosk_mode', cfg.get('kiosk_mode', ''))),
+        # Pre-built `&_dash.hide*=true` querystring fragment for whole-
+        # dashboard mode. Empty string when nothing is hidden.
+        'dash_chrome_fragment':       _dash_chrome_fragment(
+            hide_variables=bool(embed.get('hide_variables',
+                                          cfg.get('hide_variables', False))),
+            hide_time_picker=bool(embed.get('hide_time_picker',
+                                            cfg.get('hide_time_picker', False))),
+            hide_links=bool(embed.get('hide_links',
+                                      cfg.get('hide_links', False))),
+        ),
         'theme_sync':                 embed.get('theme_sync',  cfg.get('theme_sync',  True)),
     }
 
@@ -107,6 +117,33 @@ def _kiosk_prefix(value):
     if value == '':
         return 'kiosk&'
     return f'kiosk={value}&'
+
+
+def _dash_chrome_fragment(*, hide_variables, hide_time_picker, hide_links):
+    """Build the `&_dash.hide*=true` querystring suffix that toggles
+    individual pieces of the dashboard subnav inside a whole-dashboard
+    embed. Each input is a bool; only the True ones produce a fragment.
+
+    Grafana 11+ Scenes-based dashboards honour these URL params:
+      - ``_dash.hideVariables=true``   hides the variable dropdowns
+        (typically the per-dashboard `var-*` template selectors).
+      - ``_dash.hideTimePicker=true``  hides the time range picker
+        and the auto-refresh dropdown.
+      - ``_dash.hideLinks=true``       hides any custom dashboard
+        links / external buttons configured in the dashboard model.
+
+    The returned string is always either empty or a sequence of
+    "&_dash.X=true" tokens — designed to be appended to an existing
+    querystring (so it leads with "&", not "?").
+    """
+    parts = []
+    if hide_variables:
+        parts.append('&_dash.hideVariables=true')
+    if hide_time_picker:
+        parts.append('&_dash.hideTimePicker=true')
+    if hide_links:
+        parts.append('&_dash.hideLinks=true')
+    return ''.join(parts)
 
 
 # ---------------------------------------------------------------------------
