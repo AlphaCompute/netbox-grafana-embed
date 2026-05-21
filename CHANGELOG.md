@@ -4,6 +4,20 @@ All notable changes are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.7] - 2026-05-21
+
+### Fixed
+
+- `kiosk_prefix` (introduced in v1.0.6) was computed in
+  `template_content.py` and passed into the block context, but the
+  device-level and inventory-item-level template wrappers forgot to
+  forward it to the `_whole_dashboard_iframe.html` include. The
+  partial then raised `VariableDoesNotExist('Failed lookup for key
+  [%s] in %r', ('kiosk_prefix', …))` and the whole embed card
+  rendered as a "plugin error" panel.
+  Forward `block.kiosk_prefix` explicitly in both `device_panels.html`
+  and `inventory_item_panels.html` `{% include … with %}` lines.
+
 ## [1.0.6] - 2026-05-21
 
 ### Added
