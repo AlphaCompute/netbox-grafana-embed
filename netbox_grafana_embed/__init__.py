@@ -50,6 +50,18 @@ class GrafanaEmbedConfig(PluginConfig):
         # scroll experience.
         'whole_dashboard_height_px': 800,
 
+        # --- Whole-dashboard mode chrome control -----------------------------
+        # Value passed to Grafana's ?kiosk= URL param when whole_dashboard
+        # is True. Effective values (Grafana 13):
+        #   ''           → renders as ?kiosk (boolean true). Hides Grafana
+        #                  top nav + hamburger toggle; keeps the dashboard's
+        #                  own variable / timepicker subnav. Cleanest embed.
+        #   'tv'         → ?kiosk=tv. Legacy alias, same effect.
+        #   None / False → omit the kiosk param entirely. Embed shows full
+        #                  Grafana chrome (breadcrumb, search, sign-in).
+        #   other str    → forwarded verbatim, for future Grafana values.
+        'kiosk_mode': '',
+
         # --- Theme sync ------------------------------------------------------
         # When True, the plugin renders BOTH light and dark theme iframes
         # and toggles their CSS visibility based on NetBox's data-bs-theme

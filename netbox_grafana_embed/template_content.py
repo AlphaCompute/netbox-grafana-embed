@@ -77,8 +77,36 @@ def _shared_context(cfg, embed):
                                                      cfg.get('whole_dashboard', False))),
         'whole_dashboard_height_px':  embed.get('whole_dashboard_height_px',
                                                 cfg.get('whole_dashboard_height_px', 800)),
+        # Pre-built leading querystring fragment for whole-dashboard mode.
+        # See _kiosk_prefix() for the mapping from operator config.
+        'kiosk_prefix':               _kiosk_prefix(
+            embed.get('kiosk_mode', cfg.get('kiosk_mode', ''))),
         'theme_sync':                 embed.get('theme_sync',  cfg.get('theme_sync',  True)),
     }
+
+
+def _kiosk_prefix(value):
+    """Build the leading `?<kiosk_prefix>var-…` fragment for whole-dashboard
+    mode. The prefix is always either empty or ends in "&" so the rest of
+    the querystring concatenates cleanly.
+
+    Operator config (``kiosk_mode``) maps as follows:
+
+      ``None`` / ``False`` → ``""``        — omit the kiosk param; embed
+                                              shows full Grafana chrome.
+      ``""``               → ``"kiosk&"``  — bare ``?kiosk`` (boolean
+                                              true). Hides Grafana top nav
+                                              + hamburger, keeps the
+                                              dashboard's own variable /
+                                              timepicker subnav. Default.
+      ``"tv"``             → ``"kiosk=tv&"`` — legacy alias, same effect.
+      any other string     → ``"kiosk=<value>&"`` — forwarded verbatim.
+    """
+    if value is None or value is False:
+        return ''
+    if value == '':
+        return 'kiosk&'
+    return f'kiosk={value}&'
 
 
 # ---------------------------------------------------------------------------
