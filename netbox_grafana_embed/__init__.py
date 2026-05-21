@@ -80,15 +80,17 @@ class GrafanaEmbedConfig(PluginConfig):
         # access enabled for the relevant org/folder.
         'grafana_api_token': '',
         # Grafana renders one dashboard grid row at 30 px + an 8 px
-        # inter-row margin; an average of 34 covers both for typical
-        # multi-row layouts.
-        'whole_dashboard_cell_height_px': 34,
-        # Fixed pixels added on top of the computed grid total. Covers
-        # the dashboard subnav (variable / time-picker bar, ~50 px),
-        # the outer Grafana padding, the "Powered by Grafana" footer,
-        # and a safety margin so a tall last-row panel doesn't get its
-        # body clipped.
-        'whole_dashboard_padding_px': 200,
+        # inter-row margin = 38 px. Using 38 as the per-unit cost
+        # treats every row as a full row plus its trailing margin,
+        # which slightly over-counts but errs on the side of no
+        # internal scrollbar.
+        'whole_dashboard_cell_height_px': 38,
+        # Fixed pixels added on top of the computed grid total.
+        # Covers the dashboard subnav (variable / time-picker bar,
+        # ~50 px), outer Grafana padding (~30 px), the "Powered by
+        # Grafana" footer (~30 px), and a generous safety margin so
+        # a tall last-row panel never gets its body clipped.
+        'whole_dashboard_padding_px': 240,
         # HTTP timeout (seconds) for the dashboard JSON fetch. Page
         # render falls back to the integer default if exceeded.
         'whole_dashboard_fetch_timeout_s': 2.0,
