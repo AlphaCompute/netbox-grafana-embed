@@ -178,8 +178,9 @@ role matches will render the embed.
 | `theme_sync` | `True` | Render dual light+dark iframes for instant theme toggle |
 | `stat_panel_height_px` | `120` | iframe height for stat panels |
 | `timeseries_panel_height_px` | `260` | iframe height for timeseries panels |
-| `whole_dashboard` | `False` | When `True`, embed the whole dashboard as one iframe (`?kiosk=tv`) instead of per-panel `d-solo` iframes |
+| `whole_dashboard` | `False` | When `True`, embed the whole dashboard as one iframe (`?kiosk`) instead of per-panel `d-solo` iframes |
 | `whole_dashboard_height_px` | `800` | iframe height in whole-dashboard mode |
+| `kiosk_mode` | `''` | Whole-dashboard mode: value for Grafana's `?kiosk=` URL param. `''` → bare `?kiosk` (hides top nav + hamburger). `'tv'` → legacy alias. `None`/`False` → omit, show full Grafana chrome. |
 
 Any of these can be overridden per-embed by setting the same key inside
 a `device_embeds` entry or an `inventory_item_embeds` value.
@@ -192,7 +193,9 @@ boots Grafana separately and runs its own Prometheus queries. A
 13-panel dashboard with `theme_sync=True` opens 26 iframes.
 
 Set `whole_dashboard: True` on the embed to render the entire dashboard
-as a single iframe instead, using `/d/<uid>/<slug>?kiosk=tv`:
+as a single iframe instead, using `/d/<uid>/<slug>?kiosk` (hides the
+Grafana top nav + hamburger toggle, keeps the dashboard's own variable /
+timepicker subnav):
 
 ```python
 'device_embeds': [
@@ -215,6 +218,24 @@ Grafana renders the dashboard's own grid layout inside the iframe.
 two boots instead of one). The card header and "Full dashboard" link
 behave as before.
 
+How much Grafana chrome is visible inside the iframe is governed by
+the `kiosk_mode` setting (see the global-defaults table above):
+
+```python
+# Cleanest embed — default. Adds `?kiosk` (boolean true) to the URL,
+# which hides Grafana's top nav bar and hamburger toggle. The
+# dashboard's own variable / time-picker subnav stays visible.
+'kiosk_mode': '',
+
+# Embed shows full Grafana chrome (breadcrumb, search, sign-in).
+# Useful for operators who want to drill into Grafana from the embed.
+'kiosk_mode': None,
+
+# Legacy alias — same visual effect as the default, kept for v1.0.5
+# backward compatibility.
+'kiosk_mode': 'tv',
+```
+
 ## How the iframes are constructed
 
 For each panel listed in `stat_panels` / `timeseries_panels`, the plugin
@@ -234,7 +255,7 @@ In whole-dashboard mode (`whole_dashboard: True`) the URL is instead:
 
 ```
 {grafana_url}/d/{dashboard_uid}/{dashboard_slug}
-  ?kiosk=tv
+  ?{kiosk_fragment}              # see kiosk_mode setting; default ?kiosk
   &var-{device_variable}={device_value}
   [&var-{component_variable}={component_value}]
   &from={from_range}&to={to_range}

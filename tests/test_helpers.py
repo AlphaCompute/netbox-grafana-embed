@@ -155,3 +155,38 @@ def test_shared_context_whole_dashboard_global_default():
     ctx = tc._shared_context(cfg, {})
     assert ctx["whole_dashboard"] is True
     assert ctx["whole_dashboard_height_px"] == 800
+
+
+def test_kiosk_prefix_default_empty_string():
+    # Default operator config — bare ?kiosk (cleanest embed).
+    assert tc._kiosk_prefix("") == "kiosk&"
+
+
+def test_kiosk_prefix_legacy_tv_value():
+    assert tc._kiosk_prefix("tv") == "kiosk=tv&"
+
+
+def test_kiosk_prefix_arbitrary_value_forwarded():
+    # Future Grafana kiosk values pass through verbatim.
+    assert tc._kiosk_prefix("anything") == "kiosk=anything&"
+
+
+def test_kiosk_prefix_none_omits_param():
+    assert tc._kiosk_prefix(None) == ""
+
+
+def test_kiosk_prefix_false_omits_param():
+    assert tc._kiosk_prefix(False) == ""
+
+
+def test_shared_context_kiosk_prefix_default():
+    ctx = tc._shared_context({}, {})
+    # Default '' → bare ?kiosk.
+    assert ctx["kiosk_prefix"] == "kiosk&"
+
+
+def test_shared_context_kiosk_prefix_per_embed_override():
+    cfg = {"kiosk_mode": ""}
+    embed = {"kiosk_mode": None}
+    ctx = tc._shared_context(cfg, embed)
+    assert ctx["kiosk_prefix"] == ""

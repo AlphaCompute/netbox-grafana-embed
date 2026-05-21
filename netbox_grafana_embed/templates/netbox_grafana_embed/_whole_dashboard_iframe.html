@@ -9,18 +9,25 @@ Inputs:
   - device_value      (str)
   - component_variable (str, optional — pass empty for device-level)
   - component_value    (str, optional)
+  - kiosk_prefix (str) — pre-built leading querystring fragment, one of:
+        ""              → no `?kiosk` at all (Grafana renders full chrome)
+        "kiosk&"        → `?kiosk` (boolean, cleanest embed)
+        "kiosk=tv&"     → `?kiosk=tv` (legacy alias, same behaviour)
+        "kiosk=<X>&"    → forwards arbitrary value to Grafana
+        Always either empty or ending in "&" so the rest of the
+        querystring can be concatenated as-is.
   - from_range, to_range, refresh
   - theme_sync (bool) — render dual light+dark for instant switch
   - height_px (int)
 
-Unlike _iframe_pair.html this uses /d/<uid>/<slug>?kiosk=tv (full
-dashboard layout, no Grafana chrome) instead of /d-solo/?panelId=N.
-One iframe load instead of N×2, at the cost of giving up per-panel
-height control and the stat-tile bootstrap row.
+Unlike _iframe_pair.html this uses /d/<uid>/<slug>?<kiosk_prefix>var-…
+(full dashboard layout, configurable Grafana chrome) instead of
+/d-solo/?panelId=N. One iframe load instead of N×2, at the cost of
+giving up per-panel height control and the stat-tile bootstrap row.
 {% endcomment %}
 
 {% with base=grafana_url|add:"/d/"|add:dashboard_uid|add:"/"|add:dashboard_slug %}
-{% with qs="?kiosk=tv&var-"|add:device_variable|add:"="|add:device_value|add:"&from="|add:from_range|add:"&to="|add:to_range|add:"&refresh="|add:refresh %}
+{% with qs="?"|add:kiosk_prefix|add:"var-"|add:device_variable|add:"="|add:device_value|add:"&from="|add:from_range|add:"&to="|add:to_range|add:"&refresh="|add:refresh %}
 <div class="ngfe-pair" style="height: {{ height_px }}px;">
   {% if theme_sync %}
     <iframe data-theme="light"

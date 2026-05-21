@@ -4,6 +4,30 @@ All notable changes are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.6] - 2026-05-21
+
+### Added
+
+- New setting `kiosk_mode` (global default `''`, overridable per-embed).
+  Controls the Grafana `?kiosk=` URL param for whole-dashboard mode:
+
+  | Value           | Resulting URL fragment | Grafana effect                                              |
+  | --------------- | ---------------------- | ----------------------------------------------------------- |
+  | `''` *(default)*| `?kiosk`               | Hides top nav + hamburger, keeps dashboard's own subnav.    |
+  | `'tv'`          | `?kiosk=tv`            | Legacy alias for the same hide-top-nav behaviour.           |
+  | `None` / `False`| *(omitted)*            | Embed shows full Grafana chrome (breadcrumb, search, etc.). |
+  | other string    | `?kiosk=<value>`       | Forwarded verbatim — for future Grafana kiosk values.       |
+
+### Changed
+
+- **Whole-dashboard mode now defaults to `?kiosk` (bare) instead of
+  `?kiosk=tv`.** In Grafana 13 the two values are documented as
+  equivalent but `?kiosk=tv` still rendered the top breadcrumb +
+  hamburger toggle inside the embedded iframe, while `?kiosk` (bare,
+  boolean true) hides them. The new default produces a much cleaner
+  embed. Existing setups that prefer the v1.0.5 behaviour can opt
+  back in with `'kiosk_mode': 'tv'`.
+
 ## [1.0.5] - 2026-05-21
 
 ### Added
