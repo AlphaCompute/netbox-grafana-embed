@@ -73,6 +73,10 @@ def _shared_context(cfg, embed):
                                                 cfg.get('stat_panel_height_px', 120)),
         'timeseries_panel_height_px': embed.get('timeseries_panel_height_px',
                                                 cfg.get('timeseries_panel_height_px', 260)),
+        'whole_dashboard':            bool(embed.get('whole_dashboard',
+                                                     cfg.get('whole_dashboard', False))),
+        'whole_dashboard_height_px':  embed.get('whole_dashboard_height_px',
+                                                cfg.get('whole_dashboard_height_px', 800)),
         'theme_sync':                 embed.get('theme_sync',  cfg.get('theme_sync',  True)),
     }
 
@@ -104,13 +108,16 @@ class DeviceGrafanaPanels(PluginTemplateExtension):
             if value is None:
                 continue
             shared = _shared_context(cfg, embed)
+            stat_panels = embed.get('stat_panels') or []
+            stat_col_md = max(3, 12 // max(1, len(stat_panels)))
             blocks.append({
                 'title':           embed.get('title', 'Live metrics'),
                 'dashboard_uid':   embed['dashboard_uid'],
                 'dashboard_slug':  embed.get('dashboard_slug', embed['dashboard_uid']),
                 'device_variable': embed.get('device_variable', 'device'),
                 'device_value':    value,
-                'stat_panels':     embed.get('stat_panels') or [],
+                'stat_panels':     stat_panels,
+                'stat_col_md':     stat_col_md,
                 'timeseries_panels': embed.get('timeseries_panels') or [],
                 'footer':          embed.get('footer', ''),
                 **shared,

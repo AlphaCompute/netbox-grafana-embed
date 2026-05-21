@@ -178,9 +178,42 @@ role matches will render the embed.
 | `theme_sync` | `True` | Render dual light+dark iframes for instant theme toggle |
 | `stat_panel_height_px` | `120` | iframe height for stat panels |
 | `timeseries_panel_height_px` | `260` | iframe height for timeseries panels |
+| `whole_dashboard` | `False` | When `True`, embed the whole dashboard as one iframe (`?kiosk=tv`) instead of per-panel `d-solo` iframes |
+| `whole_dashboard_height_px` | `800` | iframe height in whole-dashboard mode |
 
 Any of these can be overridden per-embed by setting the same key inside
 a `device_embeds` entry or an `inventory_item_embeds` value.
+
+## Whole-dashboard mode
+
+For dashboards that already have a tight stat-tile layout you maintain
+in Grafana, the per-panel iframe approach pays a heavy cost: each panel
+boots Grafana separately and runs its own Prometheus queries. A
+13-panel dashboard with `theme_sync=True` opens 26 iframes.
+
+Set `whole_dashboard: True` on the embed to render the entire dashboard
+as a single iframe instead, using `/d/<uid>/<slug>?kiosk=tv`:
+
+```python
+'device_embeds': [
+    {
+        'title':           'Live metrics',
+        'dashboard_uid':   'my-server',
+        'dashboard_slug':  'my-server-detail',
+        'device_variable': 'device',
+        'whole_dashboard': True,
+        # Default 800 px is short on purpose (iframe scrolls inside).
+        # Set this to your dashboard's full height for a no-scroll look.
+        'whole_dashboard_height_px': 1400,
+    },
+],
+```
+
+`stat_panels` and `timeseries_panels` are ignored in this mode —
+Grafana renders the dashboard's own grid layout inside the iframe.
+`theme_sync` still works (renders one light + one dark iframe, costs
+two boots instead of one). The card header and "Full dashboard" link
+behave as before.
 
 ## How the iframes are constructed
 
@@ -190,6 +223,18 @@ emits a Grafana **panel-solo** URL:
 ```
 {grafana_url}/d-solo/{dashboard_uid}/{dashboard_slug}
   ?panelId={pid}
+  &var-{device_variable}={device_value}
+  [&var-{component_variable}={component_value}]
+  &from={from_range}&to={to_range}
+  &refresh={refresh}
+  &theme=light|dark
+```
+
+In whole-dashboard mode (`whole_dashboard: True`) the URL is instead:
+
+```
+{grafana_url}/d/{dashboard_uid}/{dashboard_slug}
+  ?kiosk=tv
   &var-{device_variable}={device_value}
   [&var-{component_variable}={component_value}]
   &from={from_range}&to={to_range}

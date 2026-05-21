@@ -4,9 +4,15 @@ InventoryItem detail pages.
 Configuration lives entirely in ``PLUGINS_CONFIG['netbox_grafana_embed']``.
 See README.md for the full schema and examples.
 """
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _pkg_version
+
 from netbox.plugins import PluginConfig
 
-__version__ = '1.0.0'
+try:
+    __version__ = _pkg_version('netbox-grafana-embed')
+except PackageNotFoundError:
+    __version__ = '0.0.0+unknown'
 
 
 class GrafanaEmbedConfig(PluginConfig):
@@ -37,6 +43,12 @@ class GrafanaEmbedConfig(PluginConfig):
         # --- iframe sizing (px) ----------------------------------------------
         'stat_panel_height_px': 120,
         'timeseries_panel_height_px': 260,
+        # Default iframe height when an embed sets `whole_dashboard: True`
+        # and renders the full dashboard as a single iframe. Short enough
+        # to not dominate the device page; the iframe scrolls internally
+        # for taller dashboards. Override per-embed for a fit-without-
+        # scroll experience.
+        'whole_dashboard_height_px': 800,
 
         # --- Theme sync ------------------------------------------------------
         # When True, the plugin renders BOTH light and dark theme iframes
@@ -74,6 +86,24 @@ class GrafanaEmbedConfig(PluginConfig):
         #       'footer': 'Out-of-band BMC telemetry.',
         #     },
         #   ]
+        #
+        # Alternative — embed the whole dashboard as a single iframe
+        # instead of per-panel `d-solo` iframes. One Grafana boot
+        # instead of 2 × len(stat_panels + timeseries_panels), and
+        # Grafana lays the panels out itself:
+        #   'device_embeds': [
+        #     {
+        #       'title': 'Live metrics',
+        #       'dashboard_uid': 'my-server',
+        #       'dashboard_slug': 'my-server-detail',
+        #       'device_variable': 'device',
+        #       'whole_dashboard': True,
+        #       'whole_dashboard_height_px': 1400,  # override 800 default
+        #     },
+        #   ]
+        # In whole-dashboard mode `stat_panels` and `timeseries_panels`
+        # are ignored — Grafana renders the dashboard's own layout
+        # inside the iframe (with `?kiosk=tv` to hide Grafana chrome).
         'device_embeds': [],
 
         # --- InventoryItem embeds --------------------------------------------

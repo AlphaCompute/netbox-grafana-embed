@@ -4,6 +4,91 @@ All notable changes are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.5] - 2026-05-21
+
+### Added
+
+- New per-embed option `whole_dashboard: True` renders the configured
+  dashboard as a single iframe (`/d/<uid>/<slug>?kiosk=tv&var-...`)
+  instead of one `d-solo` iframe per panel ID. One Grafana boot and
+  one batch of Prometheus queries instead of 2 × `len(stat_panels +
+  timeseries_panels)`, at the cost of giving up per-panel height
+  control and the stat-tile bootstrap row — Grafana lays the panels
+  out using the dashboard's own grid.
+
+- New setting `whole_dashboard_height_px` (global default `800`,
+  overridable per-embed). Controls the iframe height in whole-
+  dashboard mode. Default is short enough to not dominate the device
+  page; the iframe scrolls internally for taller dashboards.
+
+In whole-dashboard mode `stat_panels` and `timeseries_panels` are
+ignored. The "Full dashboard" header button and the optional `footer`
+behave as before. `theme_sync` still works (renders dual light + dark
+iframes).
+
+## [1.0.4] - 2026-05-18
+
+### Changed
+
+- `__version__` in `netbox_grafana_embed/__init__.py` is now resolved
+  at import time from the installed package's metadata via
+  `importlib.metadata.version('netbox-grafana-embed')`, with a
+  `'0.0.0+unknown'` fallback if the package isn't installed (e.g. when
+  running directly from a source checkout). `pyproject.toml`'s
+  `version` field becomes the single source of truth — future
+  releases only need to bump it in one place and both `/api/status/`'s
+  `installed_apps[…]` and `plugins[…]` will reflect the new version
+  automatically.
+
+## [1.0.3] - 2026-05-18
+
+### Fixed
+
+- `__version__` in `netbox_grafana_embed/__init__.py` was still pinned
+  to `'1.0.0'` while `pyproject.toml` was bumped to `1.0.2`. NetBox
+  reports both `/api/status/`'s `plugins[…]` and `installed_apps[…]`
+  from the plugin module's `__version__` attribute (via
+  `getattr(app_module, '__version__')` for installed_apps and
+  `PluginConfig.version` for plugins, both of which our class wires to
+  `__version__`). Pyproject's `version` is only used for pip METADATA
+  and is not surfaced by NetBox. Bumped `__version__` to `'1.0.3'` so
+  the two stay in sync.
+
+## [1.0.2] - 2026-05-18
+
+### Fixed
+
+- Malformed iframe URLs: every embedded Grafana iframe was loading a
+  URL missing both `?` and `panelId=N`, e.g.
+  `/d-solo/<uid>/<slug>&var-device=...`. Grafana responded with a 404
+  whose default `X-Frame-Options: deny` made the browser show the
+  iframe as `<host> refused to connect`.
+  Root cause: in `_iframe_pair.html`, `"?panelId="|add:panel_id|stringformat:"s"`
+  evaluated as `stringformat(add("?panelId=", 3), "s")`. Django's `add`
+  filter, asked to concatenate a string with an int, falls through both
+  the `int()+int()` and `str+str` branches and returns the empty string,
+  which deletes the whole `?panelId=N` prefix from the query string.
+  Coerce `panel_id` to a string *before* feeding it into `add` by
+  hoisting it into a `{% with pid_str=panel_id|stringformat:"s" %}`
+  block.
+
+- URL-encode `device_value` and `component_value` in the iframe `src`.
+  Previously only the "Full dashboard" external link encoded them, so
+  Device names or component values containing characters like space
+  or `&` produced broken iframe URLs.
+
+## [1.0.1] - 2026-05-18
+
+### Fixed
+
+- Render error on `dcim.device` pages when `stat_panels` is configured.
+  The device template tried to compute the Bootstrap column width via
+  `{{ 12|divisibleby:block.stat_panels|yesno:'4,4' }}`, which raised
+  `TypeError: int() argument must be a string, a bytes-like object or
+  a real number, not 'list'`. Column width is now computed in Python
+  (mirroring the existing InventoryItem behaviour) and the template
+  reads it as `block.stat_col_md`.
+
 ## [1.0.0] - 2026-05-13
 
 First public release.
