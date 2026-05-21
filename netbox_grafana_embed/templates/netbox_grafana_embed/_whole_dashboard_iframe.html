@@ -1,0 +1,40 @@
+{% comment %}
+Render the entire dashboard as a single iframe (whole_dashboard mode).
+
+Inputs:
+  - grafana_url       (str, no trailing slash)
+  - dashboard_uid     (str)
+  - dashboard_slug    (str)
+  - device_variable   (str)
+  - device_value      (str)
+  - component_variable (str, optional — pass empty for device-level)
+  - component_value    (str, optional)
+  - from_range, to_range, refresh
+  - theme_sync (bool) — render dual light+dark for instant switch
+  - height_px (int)
+
+Unlike _iframe_pair.html this uses /d/<uid>/<slug>?kiosk=tv (full
+dashboard layout, no Grafana chrome) instead of /d-solo/?panelId=N.
+One iframe load instead of N×2, at the cost of giving up per-panel
+height control and the stat-tile bootstrap row.
+{% endcomment %}
+
+{% with base=grafana_url|add:"/d/"|add:dashboard_uid|add:"/"|add:dashboard_slug %}
+{% with qs="?kiosk=tv&var-"|add:device_variable|add:"="|add:device_value|add:"&from="|add:from_range|add:"&to="|add:to_range|add:"&refresh="|add:refresh %}
+<div class="ngfe-pair" style="height: {{ height_px }}px;">
+  {% if theme_sync %}
+    <iframe data-theme="light"
+            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}&theme=light"
+            frameborder="0" loading="lazy"
+            title="Grafana dashboard {{ dashboard_uid }} (light)"></iframe>
+    <iframe data-theme="dark"
+            src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}&theme=dark"
+            frameborder="0" loading="lazy"
+            title="Grafana dashboard {{ dashboard_uid }} (dark)"></iframe>
+  {% else %}
+    <iframe src="{{ base }}{{ qs }}{% if component_variable %}&var-{{ component_variable }}={{ component_value|urlencode }}{% endif %}&theme=light"
+            frameborder="0" loading="lazy"
+            title="Grafana dashboard {{ dashboard_uid }}"></iframe>
+  {% endif %}
+</div>
+{% endwith %}{% endwith %}

@@ -134,3 +134,24 @@ def test_shared_context_uses_embed_overrides():
     assert ctx["stat_panel_height_px"] == 100
     assert ctx["timeseries_panel_height_px"] == 320
     assert ctx["theme_sync"] is True
+
+
+def test_shared_context_whole_dashboard_defaults_off():
+    ctx = tc._shared_context({}, {})
+    assert ctx["whole_dashboard"] is False
+    assert ctx["whole_dashboard_height_px"] == 800
+
+
+def test_shared_context_whole_dashboard_per_embed_override():
+    cfg = {"whole_dashboard": False, "whole_dashboard_height_px": 800}
+    embed = {"whole_dashboard": True, "whole_dashboard_height_px": 1400}
+    ctx = tc._shared_context(cfg, embed)
+    assert ctx["whole_dashboard"] is True
+    assert ctx["whole_dashboard_height_px"] == 1400
+
+
+def test_shared_context_whole_dashboard_global_default():
+    cfg = {"whole_dashboard": True}
+    ctx = tc._shared_context(cfg, {})
+    assert ctx["whole_dashboard"] is True
+    assert ctx["whole_dashboard_height_px"] == 800

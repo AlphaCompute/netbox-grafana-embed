@@ -4,6 +4,28 @@ All notable changes are documented here. Format based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); the project
 follows [Semantic Versioning](https://semver.org/).
 
+## [1.0.5] - 2026-05-21
+
+### Added
+
+- New per-embed option `whole_dashboard: True` renders the configured
+  dashboard as a single iframe (`/d/<uid>/<slug>?kiosk=tv&var-...`)
+  instead of one `d-solo` iframe per panel ID. One Grafana boot and
+  one batch of Prometheus queries instead of 2 × `len(stat_panels +
+  timeseries_panels)`, at the cost of giving up per-panel height
+  control and the stat-tile bootstrap row — Grafana lays the panels
+  out using the dashboard's own grid.
+
+- New setting `whole_dashboard_height_px` (global default `800`,
+  overridable per-embed). Controls the iframe height in whole-
+  dashboard mode. Default is short enough to not dominate the device
+  page; the iframe scrolls internally for taller dashboards.
+
+In whole-dashboard mode `stat_panels` and `timeseries_panels` are
+ignored. The "Full dashboard" header button and the optional `footer`
+behave as before. `theme_sync` still works (renders dual light + dark
+iframes).
+
 ## [1.0.4] - 2026-05-18
 
 ### Changed

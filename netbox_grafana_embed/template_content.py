@@ -73,6 +73,10 @@ def _shared_context(cfg, embed):
                                                 cfg.get('stat_panel_height_px', 120)),
         'timeseries_panel_height_px': embed.get('timeseries_panel_height_px',
                                                 cfg.get('timeseries_panel_height_px', 260)),
+        'whole_dashboard':            bool(embed.get('whole_dashboard',
+                                                     cfg.get('whole_dashboard', False))),
+        'whole_dashboard_height_px':  embed.get('whole_dashboard_height_px',
+                                                cfg.get('whole_dashboard_height_px', 800)),
         'theme_sync':                 embed.get('theme_sync',  cfg.get('theme_sync',  True)),
     }
 
