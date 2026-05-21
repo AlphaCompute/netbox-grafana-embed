@@ -36,6 +36,11 @@ Changelog   = "https://github.com/AlphaCompute/netbox-grafana-embed/blob/main/CH
 dev = [
   "ruff>=0.5.0",
   "pytest>=8.0",
+  # `requests` is imported lazily inside the auto-height code path
+  # (template_content._cached_dashboard_height). NetBox already depends
+  # on it at runtime, but the test venv needs it explicitly so the
+  # mock-based tests for that path can run.
+  "requests>=2.20",
 ]
 
 [tool.setuptools]
